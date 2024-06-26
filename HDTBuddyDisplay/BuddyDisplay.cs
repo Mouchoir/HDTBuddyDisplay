@@ -60,7 +60,9 @@ namespace HDTBuddyDisplay
                 SettingsChanged(null, null);
             }
 
-            CardImage.SetCardIdFromCard(Database.GetCardFromDbfId(cardDbfId, false));
+            var card = Database.GetCardFromDbfId(cardDbfId, false);
+            card.BaconCard = true;  // Ensure we are getting the Battlegrounds version
+            CardImage.SetCardIdFromCard(card);
         }
 
         private void SettingsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
