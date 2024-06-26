@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using static HearthDb.Enums.GameTag;
@@ -40,6 +40,7 @@ namespace HDTBuddyDisplay
                 {
                     break;
                 }
+                Log.Error("loaded heroes : " + loadedHeroes);
             }
         }
 
@@ -83,7 +84,8 @@ namespace HDTBuddyDisplay
                 return;
             }
 
-            var buddyCardId = $"{playerHero.CardId}_Buddy";
+            var cleanHeroId = CleanHeroId(playerHero.CardId);
+            var buddyCardId = $"{cleanHeroId}_Buddy";
             var buddyDbfId = GetDbfidFromCardId(buddyCardId);
 
             if (buddyDbfId != -1)
@@ -95,6 +97,9 @@ namespace HDTBuddyDisplay
             {
                 Log.Warn("No buddy DbfId found whereas game is already started!");
             }
+            Log.Info("player hero: " + playerHero);
+            Log.Info("Buddy ID found: " + buddyCardId);
+            Log.Info("Buddy DbfId found: " + buddyDbfId);
         }
 
         private bool HeroesSelected(List<Entity> heroes)
@@ -129,6 +134,18 @@ namespace HDTBuddyDisplay
             {
                 Log.Error("No opponent hero found.");
             }
+        }
+
+        private string CleanHeroId(string heroId)
+        {
+            var index = heroId.IndexOf("_SKIN_");
+            return index >= 0 ? heroId.Substring(0, index) : heroId;
+        }
+
+        private string GetBuddyId(string heroId)
+        {
+            var cleanHeroId = CleanHeroId(heroId);
+            return $"{cleanHeroId}_Buddy";
         }
 
         private int GetDbfidFromCardId(string cardId)
