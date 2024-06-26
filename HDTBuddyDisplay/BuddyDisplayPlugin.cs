@@ -16,7 +16,7 @@ namespace HDTBuddyDisplay
         // Thank you Tignus for HDTAnomalyDisplay ! I used a lot of your code.
         public string Author => "Mouchoir & Tignus";
 
-        public Version Version => new Version(1, 0, 0);
+        public Version Version => new Version(1, 1, 0);
 
         public MenuItem MenuItem => CreateMenu();
 
