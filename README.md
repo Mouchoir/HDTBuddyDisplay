@@ -31,4 +31,4 @@ All credit to [@Tignus](https://github.com/Tignus) for the incredible work on [H
 
 ## License
 
-This project is distributed under the GNU General Public License v3.0. See the [LICENSE](https://github.com/Mouchoir/HDTBuddyDisplay/blob/main/LICENSE) file in the repository for more details.
+This project is distributed under the GNU General Public License v3.0. See the [LICENSE](https://github.com/Mouchoir/HDTBuddyDisplay/blob/master/LICENSE) file in the repository for more details.
