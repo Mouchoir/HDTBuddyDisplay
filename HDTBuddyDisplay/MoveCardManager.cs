@@ -47,7 +47,7 @@ namespace HDTBuddyDisplay
             return IsUnlocked;
         }
 
-        public bool isUILocked()
+        public bool IsUILocked()
         {
             return _mouseInput == null;
         }

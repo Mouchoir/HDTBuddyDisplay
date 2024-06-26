@@ -17,7 +17,7 @@ namespace HDTBuddyDisplay
 
         private BuddyDisplay BuddyDisplay;
 
-        private readonly int NorgannonDbfId = 103078;
+        private readonly string DummyBuddyCardId = "TB_BaconShop_HERO_16_Buddy";
 
         public static bool IsUnlocked { get; private set; }
 
@@ -36,8 +36,10 @@ namespace HDTBuddyDisplay
 
         private static Flyout CreateSettingsFlyout()
         {
-            var settings = new Flyout();
-            settings.Position = Position.Left;
+            Flyout settings = new Flyout
+            {
+                Position = Position.Left
+            };
             Panel.SetZIndex(settings, 100);
             settings.Header = "Settings";
             settings.Content = new SettingsView();
@@ -56,9 +58,9 @@ namespace HDTBuddyDisplay
 
             if (BuddyDisplay.MoveManager == null && BuddyDisplay == null)
             {
-                Log.Info("No ongoing game, create a dummy Norgannon card that can be moved around to save the position. Yes I know it's not a buddy.");
+                Log.Info("A.F. Kay buddy loaded. All good you can wait 2 turns");
                 BuddyDisplay = new BuddyDisplay();
-                BuddyDisplay.InitializeView(NorgannonDbfId);
+                BuddyDisplay.InitializeView(DummyBuddyCardId);
                 API.GameEvents.OnGameStart.Add(ClearCardDisplay);
             }
 

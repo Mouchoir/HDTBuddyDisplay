@@ -1,21 +1,24 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using static HearthDb.Enums.GameTag;
+using HearthDb.Enums;
+using Hearthstone_Deck_Tracker.API;
+using Hearthstone_Deck_Tracker.Controls;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using HSCard = Hearthstone_Deck_Tracker.Hearthstone.Card;
+
 using Hearthstone_Deck_Tracker.Hearthstone.Entities;
 using Hearthstone_Deck_Tracker.Utility.Logging;
-using Hearthstone_Deck_Tracker.API;
-using System.Windows.Controls;
-using Hearthstone_Deck_Tracker.Controls;
-using System.Windows.Media;
-using HearthDb.Enums;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Text.RegularExpressions;
+using ControlzEx.Standard;
 
 namespace HDTBuddyDisplay
 {
-    public class BuddyDisplay : IDisposable
+    public class BuddyDisplay
     {
         public CardImage CardImage;
         public static MoveCardManager MoveManager;
@@ -23,28 +26,34 @@ namespace HDTBuddyDisplay
         public BuddyDisplay()
         {
         }
-
-        private async Task AwaitGameEntity()
+        public async Task<String> AwaitHeroSelection()
         {
             const int maxAttempts = 100;
             const int delayBetweenAttempts = 500;
 
-            for (var i = 0; i < maxAttempts; i++)
+            for (int i = 0; i < maxAttempts; i++)
             {
                 await Task.Delay(delayBetweenAttempts);
-                var loadedHeroes = Core.Game.Player.PlayerEntities
+
+                // Heroes list is available
+                List<Entity> loadedHeroes = Core.Game.Player.PlayerEntities
                     .Where(x => x.IsHero && (x.HasTag(GameTag.BACON_HERO_CAN_BE_DRAFTED) || x.HasTag(GameTag.BACON_SKIN)))
                     .ToList();
 
-                if (loadedHeroes.Count >= 2 && HeroesSelected(loadedHeroes))
+                // Hero has been selected
+                Entity playerHero = Core.Game.Player.Board.FirstOrDefault(x => x.IsPlayer && x.IsHero);
+
+                String heroCardId = playerHero?.CardId ?? String.Empty;
+
+                if (loadedHeroes.Count >= 2 && !String.IsNullOrEmpty(heroCardId))
                 {
-                    break;
+                    return heroCardId;
                 }
-                Log.Error("loaded heroes : " + loadedHeroes);
             }
+            return String.Empty;
         }
 
-        public void InitializeView(int cardDbfId)
+        public void InitializeView(String cardId)
         {
             if (CardImage == null)
             {
@@ -60,7 +69,7 @@ namespace HDTBuddyDisplay
                 SettingsChanged(null, null);
             }
 
-            var card = Database.GetCardFromDbfId(cardDbfId, false);
+            HSCard card = Database.GetCardFromId(cardId);
             card.BaconCard = true;  // Ensure we are getting the Battlegrounds version
             CardImage.SetCardIdFromCard(card);
         }
@@ -77,84 +86,40 @@ namespace HDTBuddyDisplay
             if (Core.Game.CurrentGameMode != GameMode.Battlegrounds)
                 return;
 
-            await AwaitGameEntity();
+            // Wait until the game starts
+            String heroCardId = await AwaitHeroSelection();
 
-            Entity playerHero = Core.Game.Player.Board.FirstOrDefault(x => x.IsHero);
-            if (playerHero == null)
+            if (String.IsNullOrEmpty(heroCardId))
             {
-                Log.Error("No player hero found.");
+                Log.Error("No player hero found. Possible timeout at game load.");
                 return;
             }
 
-            var cleanHeroId = CleanHeroId(playerHero.CardId);
-            var buddyCardId = $"{cleanHeroId}_Buddy";
-            var buddyDbfId = GetDbfidFromCardId(buddyCardId);
+            String cleanHeroId = CleanHeroId(heroCardId);
+            String buddyCardId = $"{cleanHeroId}_Buddy";
 
-            if (buddyDbfId != -1)
-            {
-                Log.Info("Buddy DbfId found: " + buddyDbfId);
-                InitializeView(buddyDbfId);
-            }
-            else
-            {
-                Log.Warn("No buddy DbfId found whereas game is already started!");
-            }
-            Log.Info("player hero: " + playerHero);
-            Log.Info("Buddy ID found: " + buddyCardId);
-            Log.Info("Buddy DbfId found: " + buddyDbfId);
-        }
-
-        private bool HeroesSelected(List<Entity> heroes)
-        {
-            var playerHero = heroes.FirstOrDefault(x => x.IsControlledBy(Core.Game.Player.Id));
-            var opponentHero = heroes.FirstOrDefault(x => !x.IsControlledBy(Core.Game.Player.Id));
-
-            return playerHero != null && opponentHero != null;
-        }
-
-        private void LogHeroIds()
-        {
-            var playerHero = Core.Game.Player.Board.FirstOrDefault(x => x.IsHero);
-            var opponentHero = Core.Game.Opponent.Board.FirstOrDefault(x => x.IsHero);
-
-            if (playerHero != null)
-            {
-                var heroId = playerHero.CardId;
-                Log.Info($"Player hero ID is: {heroId}");
-            }
-            else
-            {
-                Log.Error("No player hero found.");
-            }
-
-            if (opponentHero != null)
-            {
-                var opponentHeroId = opponentHero.CardId;
-                Log.Info($"Opponent hero ID is: {opponentHeroId}");
-            }
-            else
-            {
-                Log.Error("No opponent hero found.");
-            }
+            InitializeView(buddyCardId);
         }
 
         private string CleanHeroId(string heroId)
         {
-            var index = heroId.IndexOf("_SKIN_");
-            return index >= 0 ? heroId.Substring(0, index) : heroId;
-        }
+            string cleanHero;
+            string skinPattern = @"^(.*?)_SKIN_";
 
-        private string GetBuddyId(string heroId)
-        {
-            var cleanHeroId = CleanHeroId(heroId);
-            return $"{cleanHeroId}_Buddy";
-        }
+            Match heroHasSkin = Regex.Match(heroId, skinPattern);
 
-        private int GetDbfidFromCardId(string cardId)
-        {
-            var card = Hearthstone_Deck_Tracker.Hearthstone.Database.GetCardFromId(cardId);
-            Log.Info($"Buddy dbFId: {card?.DbfId ?? -1}");
-            return card?.DbfId ?? -1;
+            if (heroHasSkin.Success)
+            {
+                cleanHero = heroHasSkin.Groups[1].Value;
+            }
+            else
+            {
+                // If "_SKIN_" is not found, keep the original string
+                cleanHero = heroId;
+            }
+
+            // Deal with transformations
+            return BattlegroundsUtils.GetOriginalHeroId(cleanHero);
         }
 
         public void ClearCard()
@@ -174,11 +139,6 @@ namespace HDTBuddyDisplay
             }
 
             Settings.Default.PropertyChanged -= SettingsChanged;
-        }
-
-        public void Dispose()
-        {
-            ClearCard();
         }
     }
 }
