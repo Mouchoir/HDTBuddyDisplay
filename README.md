@@ -22,7 +22,7 @@ Once installed, the plugin will automatically display buddy tooltips within the 
 
 ## Contributions
 
-All credit to [@Tignus](https://github.com/Tignus) for the incredible work on [@HDTAnomalyDisplay](https://github.com/Mouchoir/HDTAnomalyDisplay)! Want to contribute? We'd love your input:
+All credit to [@Tignus](https://github.com/Tignus) for the incredible work on [HDTAnomalyDisplay](https://github.com/Mouchoir/HDTAnomalyDisplay)! Want to contribute? We'd love your input:
 
 - Fork the project on GitHub.
 - Create a new branch for your feature or fix.
